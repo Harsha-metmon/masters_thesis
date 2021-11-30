@@ -58,6 +58,7 @@ def moti():
 
     Lr = 0.5
     Lf = 0.5
+    vmax=0.033
 
     # side slip angle (angle between the heading angle and the frame of the bicycle )
 
@@ -84,10 +85,10 @@ def moti():
     ocp.set_initial(x,ocp.t)
     ocp.set_initial(y,0)
     ocp.set_initial(theta,0)
-    ocp.set_initial(V,1)
+    ocp.set_initial(V,vmax)
 
 
-    ocp.subject_to(-1 <= (V<=1))
+    ocp.subject_to(-vmax <= (V<=vmax))
     ocp.subject_to( -pi/2 <= (deltaf<= pi/2))
     ocp.subject_to( -pi/2 <= (deltar<= pi/2))
 

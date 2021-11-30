@@ -45,21 +45,21 @@ def moti():
     theta = ocp.state()
 
     deltaf = ocp.control()
-    # Vf      =ocp.control()
+    #Vf      =ocp.control()
     deltar = ocp.control()
-    # Vr     =ocp.control()
+    #Vr     =ocp.control()
     V = ocp.control()
 
     # Distances from the CG to the rear/front wheel centres
 
     Lr = 0.5
     Lf = 0.5
-
+    vmax=0.033
     # side slip angle (angle between the heading angle and the frame of the bicycle )
 
     bet = arctan(((Lf * tan(deltar)) + (Lr * tan(deltaf))) / (Lf + Lr))
 
-    # V=(Vf*cos(deltaf(i))+Vr*cos(deltar(i)))/(2*cos(beta(i)))
+    #V=((Vf*cos(deltaf)+Vr*cos(deltar))/(2*cos(bet)))
 
     # simply the rhs of the state evolution equation for theta
     cc = (V * cos(bet) * (tan(deltaf) + tan(deltar)) / (Lf + Lr))
@@ -76,29 +76,31 @@ def moti():
     ocp.subject_to(ocp.at_t0(theta) == 0)
 
     # final constraints
-    ocp.subject_to(ocp.at_tf(x) == 0)
-    ocp.subject_to(ocp.at_tf(y) == 4)
-    #ocp.subject_to(ocp.at_tf(theta) == pi/2)
+    ocp.subject_to(ocp.at_tf(x) == 4)
+    ocp.subject_to(ocp.at_tf(y) == 0)
+    ocp.subject_to(ocp.at_tf(theta) == 0)
 
-    ocp.set_initial(x, 0)
-    ocp.set_initial(y, ocp.t)
+    ocp.set_initial(x, ocp.t)
+    ocp.set_initial(y, 0)
     ocp.set_initial(theta, 0)
-    ocp.set_initial(V, 0.1)
+    ocp.set_initial(V, vmax)
+    
 
-    ocp.subject_to(-0.1 <= (V <= 0.1))
+    ocp.subject_to(-vmax <= (V <= vmax))
+   
     ocp.subject_to(-pi/2 <= (deltaf <= pi/2))
     ocp.subject_to(-pi/2 <= (deltar <= pi/2))
 
     # Round obstacle
-    p0 = vertcat(0.2,2)
-    r0 = 0.5
+    p0 = vertcat(2,0.2)
+    r0 = 0.9
 
     p = vertcat(x,y)
-    #ocp.subject_to(sumsqr(p-p0)>=r0**2)
+    ocp.subject_to(sumsqr(p-p0)>=r0**2)
 
     # Minimal time
     ocp.add_objective(ocp.T)
-    ocp.add_objective(10*ocp.integral(x**2))
+    ocp.add_objective(10*ocp.integral(y**2))
 
     # Pick a solution method
     ocp.solver('ipopt')
@@ -122,7 +124,9 @@ def moti():
     ts, ys = sol.sample(y, grid='integrator')
 
     plot(xs, ys, 'b.')
-
+    legend = plt.legend(['x vs y'])
+    plt.xlabel('x in m')
+    plt.ylabel('y in m')
 
     ts, xs = sol.sample(x, grid='integrator',refine=10)
     ts, ys = sol.sample(y, grid='integrator',refine=10)
@@ -136,22 +140,30 @@ def moti():
 
     tsi, deltaf_s = sol.sample(deltaf, grid='control')
     tsi, V_s = sol.sample(V, grid='control')
-
+    
+    tsi, theta_s = sol.sample(theta, grid='control')
     axis('equal')
     show(block=True)
 
-    print(tsi, deltar_s, deltaf_s)
+    print(tsi,V_s)
     print(len(tsi))
     figure()
     plot(tsi,deltar_s,'r--')
     plot(tsi,deltaf_s)
-
+    legend = plt.legend(['time vs rear steering angle','time vs front steering angle'])
+    plt.xlabel('time in sec')
+    plt.ylabel('angle in rad')
+    
     figure()
 
-    #plot(ts,thetas)
-
+   
+    plot(tsi,theta_s)
+    
+    legend = plt.legend(['time vs yaw angle'])
+    plt.xlabel('time in sec')
+    plt.ylabel('angle in rad')
     plt.show()
-    return tsi, deltar_s, deltaf_s, V_s
+    return tsi, deltar_s, deltaf_s,V_s
 
 if __name__ == '__main__':
     moti()

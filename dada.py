@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-X = pd.read_csv('eagle_data.txt',sep="\t",skiprows=[1,2,3,4])
+X = pd.read_csv('eagle_data2.txt',sep="\t",skiprows=[1])
 X.columns = ['time', 'id', 'x','y','z','R','P','Y','Eagle']
 
 E=X['Eagle']
@@ -21,16 +21,41 @@ Y=X['Y'].values
 a=x[0]
 b=y[0]
 
+c=t[0]
+
+print(t)
+
+t=[i - c for i in t]
+
+delta_t=[None]*(len(t)-1)
+
+for i in range(len(t)-1):
+   delta_t[i]=t[i+1]-t[i]
+
 x = [i - a for i in x]
 y = [i - b for i in y]
 
-print(x)
+print(t)
+print(delta_t)
 
 
 
-print(y)
 
-plt.plot(x,y)
+plt.figure()
+
+kk=plt.plot(x,y)
+legend = plt.legend(['x vs y'])
+plt.xlabel('x in m')
+plt.ylabel('y in m')
+
+plt.figure()
+
+plt.plot(t,Y)
+legend = plt.legend(['time vs yaw angle'])
+plt.xlabel('time in secs')
+plt.ylabel('angle in radians')
+
+
 plt.show()
 
 
