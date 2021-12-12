@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-X = pd.read_csv('eagle_data2.txt',sep="\t",skiprows=[1])
+X = pd.read_csv('eagle_data.txt',sep="\t",skiprows=[1])
 X.columns = ['time', 'id', 'x','y','z','R','P','Y','Eagle']
 
 E=X['Eagle']
@@ -22,6 +22,7 @@ a=x[0]
 b=y[0]
 
 c=t[0]
+d=Y[0]
 
 print(t)
 
@@ -34,10 +35,24 @@ for i in range(len(t)-1):
 
 x = [i - a for i in x]
 y = [i - b for i in y]
+Y=[i - d for i in Y]
 
 print(t)
 print(delta_t)
 
+
+x_tot=x[-1]-x[0]
+y_tot=y[-1]-y[0]
+t_tot=t[-1]-t[0]
+
+
+
+distance=np.sqrt(x_tot**2+y_tot**2)
+
+print('dist',distance)
+
+vel=distance/t_tot
+print(x_tot,y_tot,t_tot,vel)
 
 
 
