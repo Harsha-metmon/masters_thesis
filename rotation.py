@@ -53,12 +53,17 @@ def plot_polygon(x_d,theta,height,width):
     t = mpl.transforms.Affine2D().translate(midPoint[0],midPoint[1])
     tra = r + t + ax.transData
     polygon.set_transform(tra)
-    
+    coords = polygon.get_patch_transform().transform(polygon.get_path().vertices[:-1])
+    tc=tra.transform(coords)
+    inv = ax.transData.inverted()
+    corner_p=inv.transform((tc))
+    print(corner_p)
+
     ax.add_patch(polygon)
     
     #print(pp)
     
-plot_polygon([3,4],pi/6,2,6)
+plot_polygon([3,4],0,2,6)
 
 
 plt.xlim(-5, 10)
