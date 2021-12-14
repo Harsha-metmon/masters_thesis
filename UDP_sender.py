@@ -1,7 +1,7 @@
 
 import socket
 import sys
-import motion_planningt
+import straight_line3
 import struct
 from time import time, sleep
 from numpy import pi,cos
@@ -17,8 +17,6 @@ UDP_IP = "127.0.0.1"
 UDP_PORT = 5000
 
 '''
-
-'''
  
 vmax=0.0123 
 tick_max=200
@@ -29,7 +27,7 @@ tick_min=0
 slope=(tick_max-tick_min)/(2*vmax)
 
 #tsi,deltar_s,deltaf_s,V_s=motion_planning_waypoints.moti()
-tsi,deltar_s,deltaf_s,V_s,bet_s=motion_planningt.moti()
+tsi,deltar_s,deltaf_s,V_s,bet_s=straight_line3.moti()
 
 
 
@@ -63,19 +61,9 @@ for i in range(len(tsi)):
 start=time()
 for i in range(len(tsi) - 1):
  inter = tsi[i + 1] - tsi[i]
- values = (ticksf[i], angf[i], ticksf[i], angf[i], ticksr[i], angr[i], ticksr[i], angr[i])
+ values = (ticksf[i],angf[i],ticksf[i],angf[i],ticksr[i],angr[i],ticksr[i],angr[i])
  print(values)
  #values = (10,90,10,90,10,90,10,90)
- #MESSAGE = struct.Struct('B B B B B B B B').pack(*values)
-
-'''
-
-start=time()
-inter=1
-while True:
-
-
- values = (200,180,0,0,200,180,0,0)
  MESSAGE = struct.Struct('B B B B B B B B').pack(*values)
  print("UDP target IP: %s" % UDP_IP)
  print("UDP target port: %s" % UDP_PORT)
@@ -87,4 +75,14 @@ while True:
  sleep(inter - time() % inter) 
  end=time()
  print(end-start)
+
+'''
+start=time()
+inter=1
+while True:
+
+'''
+ #values = (200,180,0,0,200,180,0,0)
+ #MESSAGE = struct.Struct('B B B B B B B B').pack(*values)
+
 

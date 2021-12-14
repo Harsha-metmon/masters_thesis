@@ -23,7 +23,6 @@
 """
 Motion planning
 ===============
-
 Simple motion planning with circular obstacle
 """
 
