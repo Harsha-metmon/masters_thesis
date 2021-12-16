@@ -107,8 +107,8 @@ def moti():
     ocp.set_initial(y, in_y)
     ocp.set_initial(theta, in_theta)
     ocp.set_initial(V, in_V)
-    #ocp.set_initial(deltar, 0)
-    #ocp.set_initial(deltaf, 0)
+    #ocp.set_initial(deltar, -pi/1.95)
+    #ocp.set_initial(deltaf, -pi/1.95)
     
 
     ocp.subject_to(-vmax <= (V <= vmax))
@@ -116,7 +116,7 @@ def moti():
     ocp.subject_to(-pi/2 <= (deltar <= pi/2))
     ocp.subject_to(-2*pi <= (ocp.der(deltaf) <= 2*pi))
     ocp.subject_to(-2*pi<= (ocp.der(deltar) <= 2*pi))
-    ocp.subject_to(((deltaf*deltar) <= -0.05))
+    #ocp.subject_to(((deltaf*deltar) <= -0.05))
 
     # Round obstacle
     p0 = vertcat(0.7,0.01)
@@ -128,8 +128,7 @@ def moti():
     # Minimal time
     ocp.add_objective(ocp.T)
     #ocp.add_objective(2*ocp.integral(x**2+y**2))
-    
-    #ocp.add_objective(10 * ocp.integral(theta ** 2))
+    ocp.add_objective(10 * ocp.integral((theta-(pi/4)) ** 2))
 
     # Pick a solution method
 
@@ -181,7 +180,7 @@ def moti():
     axis('equal')
     show(block=True)
 
-    print(tsi,deltaf_s,deltar_s)
+    print(tsi,V_s)
     #print(len(ts),ts)
     #print(len(tsi),tsi)
     figure()
@@ -214,7 +213,8 @@ def moti():
         fig.set_dpi(100)
         fig.set_size_inches(6, 5.5)
 
-        ax = plt.axes(xlim=(-2, 2), ylim=(-2, 6))
+        ax = plt.axes(xlim=(-2, 2), ylim=(-2, 2))
+        ax.set_aspect('equal', adjustable='box')
 
         x_d = x_s
         y_d = y_s
@@ -297,7 +297,7 @@ def moti():
                                        frames=len(x_d),
                                        interval=20,
                                        blit=True)
-        writervideo = animation.FFMpegWriter(fps=60)
+        writervideo =animation.FFMpegWriter(fps=100)
         #anim.save('increasingStraightLine.mp4', writer=writervideo)
         plt.show()
 

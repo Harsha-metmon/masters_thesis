@@ -10,12 +10,13 @@ fig.set_dpi(100)
 fig.set_size_inches(6, 5.5)
 
 ax = plt.axes(xlim=(-10, 15), ylim=(-10, 15))
+ax.set_aspect('equal', adjustable='box')
 
 x_d = np.linspace(0,10,100)
 y_d = np.linspace(0,10,100)
 theta = np.linspace(pi/2,0,100)
-deltaf=np.linspace(pi/2,0,100)
-deltar=np.linspace(0,-pi/2,100)
+deltaf=np.linspace(0,pi/2,100)
+deltar=np.linspace(0,pi/2,100)
 
 
 #robot dimension
@@ -23,8 +24,8 @@ height=2
 width=6
 
 #wheel dimension
-w_h=0.2
-w_w=0.6
+w_h=0.4
+w_w=1
 
 vertices=(0,0)
 vertices1=(width,height/2)

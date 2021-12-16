@@ -201,7 +201,7 @@ def moti():
 
         fig = plt.figure()
         fig.set_dpi(100)
-        fig.set_size_inches(6, 5.5)
+        fig.set_size_inches(7, 6.5)
 
         ax = plt.axes(xlim=(-2, 2), ylim=(-2, 6))
 
@@ -280,8 +280,8 @@ def moti():
                                        frames=len(x_d),
                                        interval=20,
                                        blit=True)
-        writervideo = animation.FFMpegWriter(fps=60)
-        # anim.save('increasingStraightLine.mp4', writer=writervideo)
+        writervideo = animation.FFMpegWriter(fps=100)
+        anim.save('increasingStraightLine.mp4', writer=writervideo)
         plt.show()
 
     return tsi, deltar_s, deltaf_s, V_s, bet_s

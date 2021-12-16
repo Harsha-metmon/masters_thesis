@@ -1,7 +1,7 @@
 
 import socket
 import sys
-import straight_line3
+import omni
 import struct
 from time import time, sleep
 from numpy import pi,cos
@@ -27,26 +27,24 @@ tick_min=0
 slope=(tick_max-tick_min)/(2*vmax)
 
 #tsi,deltar_s,deltaf_s,V_s=motion_planning_waypoints.moti()
-tsi,deltar_s,deltaf_s,V_s,bet_s=straight_line3.moti()
+tsi,deltar_s,deltaf_s,Vf_s,Vr_s=omni.moti()
 
-
-
-Vf_s=V_s
+#Vr_s=-Vr_s
 
 angr=[None]*len(tsi)
 angf=[None]*len(tsi)
 ticksf=[None]*len(tsi)
 ticksr=[None]*len(tsi)
-Vr_s=[None]*len(tsi)
+
 for i in range(len(tsi)):
- Vr_s[i]=(V_s[i]/cos(deltar_s[i]))*(2*cos(bet_s[i])-cos(deltaf_s[i]))
+
  deltar_s[i] = round(float(((deltar_s[i]+pi/2) * 180 / pi)))
  angr[i]=int(deltar_s[i])
  deltaf_s[i] = round(float(((deltaf_s[i]+pi/2) * 180 / pi)))
  angf[i]=int(deltaf_s[i])
  ticksf[i]=int(round(float(tick_min+(slope*(Vf_s[i]+vmax)))))
  ticksr[i]=int(round(float(tick_min+(slope*(Vr_s[i]+vmax)))))
- 
+
 
  
 #V_s = [200] * len(tsi)

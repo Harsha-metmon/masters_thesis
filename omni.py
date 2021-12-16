@@ -24,13 +24,13 @@
 Motion planning
 ===============
 
-Straight line along x
+Straight line along 45 degree
 """
 
 from rockit import *
 import matplotlib.pyplot as plt
 import numpy as np
-from numpy import pi, cos, sin, tan,arctan
+from numpy import pi, cos, sin, tan,arctan,sqrt
 from casadi import vertcat, sumsqr
 from pylab import *
 
@@ -41,47 +41,43 @@ def moti():
     #initial and final constraints
     
     N=21
+
     x_i=0
     y_i=0
     theta_i=0
     
-    x_f=2
-    y_f=0
-    theta_f=0
+    x_f=1
+    y_f=1
+    theta_f=pi/4
     
     # Bicycle model
 
-    x     = ocp.state()
-    y     = ocp.state()
+    x = ocp.state()
+    y = ocp.state()
     theta = ocp.state()
 
-    deltaf = ocp.control(order=1)
-    #Vf      =ocp.control()
-    deltar = ocp.control(order=1)
-    #Vr     =ocp.control()
-    V = ocp.control()
+    omega = ocp.control()
+    Vx = ocp.control()
+    Vy = ocp.control()
 
+
+    Vr= ocp.control()
+    Vf=ocp.control()
+    deltar=ocp.control(order=1)
+    deltaf=ocp.control(order=1)
     # Distances from the CG to the rear/front wheel centres
 
-    Lr = 0.4
-    Lf = 0.6
+    Lr = 0.5
+    Lf = 0.5
     vmax=0.0123
     
     animation=True
     # side slip angle (angle between the heading angle and the frame of the bicycle )
 
-    bet = arctan(((Lf * tan(deltar)) + (Lr * tan(deltaf))) / (Lf + Lr))
 
-    #V=((Vf*cos(deltaf)+Vr*cos(deltar))/(2*cos(bet)))
-
-    # simply the rhs of the state evolution equation for theta
-    cc = ((V * cos(bet) * (tan(deltaf) -tan(deltar))) / (Lf + Lr))
-
-    # Kinematics equations (with the robot axis at the cg of the bicycle )
-
-    ocp.set_der(x, V * cos(theta + bet))
-    ocp.set_der(y, V * sin(theta + bet))
-    ocp.set_der(theta, cc)
+    ocp.set_der(x, Vx)
+    ocp.set_der(y, Vy)
+    ocp.set_der(theta, omega)
 
     # Initial constraints
     ocp.subject_to(ocp.at_t0(x) == x_i)
@@ -101,25 +97,36 @@ def moti():
     in_x=np.linspace(x_i,x_f,N)
     in_y=np.linspace(y_i,y_f,N)
     in_theta=np.linspace(theta_i,theta_f,N)
-    in_V=vmax
+
+
     ocp.set_initial(x, in_x)
     ocp.set_initial(y, in_y)
     ocp.set_initial(theta, in_theta)
-    ocp.set_initial(V, in_V)
-    ocp.set_initial(deltar, 0)
-    ocp.set_initial(deltaf, 0)
+    #ocp.set_initial(V, in_V)
+    #ocp.set_initial(deltar, -pi/1.95)
+    #ocp.set_initial(deltaf, -pi/1.95)
     
 
-    ocp.subject_to(-vmax <= (V <= vmax))
-   
-    ocp.subject_to(-pi/2 <= (deltaf <= pi/2))
+    ocp.subject_to(-vmax<= (Vr <= vmax))
+    ocp.subject_to(-vmax <= (Vf <= vmax))
+    ocp.subject_to(-pi/2<= (deltaf <= pi/2))
     ocp.subject_to(-pi/2 <= (deltar <= pi/2))
-    ocp.subject_to(-100 <= (ocp.der(deltaf) <= 100))
-    ocp.subject_to(-100 <= (ocp.der(deltar) <= 100))
-    #ocp.subject_to(((deltaf*deltar) <= 0))
+    ocp.subject_to(-2*pi <= (ocp.der(deltaf) <= 2*pi))
+    ocp.subject_to(-2*pi<= (ocp.der(deltar) <= 2*pi))
+    #ocp.subject_to(0 <= (Vr*deltar))
+    #ocp.subject_to(0 <= (Vf* deltaf))
+
+    #input kinematic constraints
+
+
+    ocp.subject_to(((-Vr * cos(deltar + theta)) + Vx + (omega * Lr * sin(theta)) == 0))
+    ocp.subject_to(((-Vr * sin(deltar + theta)) + Vy - (omega * Lr * cos(theta)) == 0))
+    ocp.subject_to(((-Vf * cos(deltaf + theta)) + Vx - (omega * Lf * sin(theta)) == 0))
+    ocp.subject_to(((-Vf * sin(deltaf + theta)) + Vy + (omega * Lf * cos(theta)) == 0))
+    V = sqrt((Vx ** 2) + (Vy ** 2))
 
     # Round obstacle
-    p0 = vertcat(0.7,0.01)
+    p0 = vertcat(0.7,0.02)
     r0 = 0.1
 
     p = vertcat(x,y)
@@ -127,10 +134,9 @@ def moti():
 
     # Minimal time
     ocp.add_objective(ocp.T)
-    #ocp.add_objective(2*ocp.integral(x**2+y**2))
-    
-    #ocp.add_objective(10 * ocp.integral(theta ** 2))
-
+    #ocp.add_objective(2*ocp.integral((y)**2))
+    ocp.add_objective(5 * ocp.integral(((theta-(pi/4) )** 2)))
+    ocp.add_objective(2*ocp.integral(((ocp.der(deltar))**2+(ocp.der(deltaf))**2)))
     # Pick a solution method
 
     options = {'ipopt': {"max_iter": 3000}}
@@ -172,16 +178,20 @@ def moti():
     tsi, deltar_s = sol.sample(deltar, grid='integrator',refine=50)
     tsi,x_s=sol.sample(x, grid='integrator',refine=50)
     tsi, y_s = sol.sample(y, grid='integrator', refine=50)
+    tsi, V_s = sol.sample(V, grid='integrator', refine=50)
+    #tsi, Vy_s = sol.sample(Vy, grid='integrator', refine=50)
+    tsi, omega_s = sol.sample(omega, grid='integrator', refine=50)
 
     tsi, deltaf_s = sol.sample(deltaf, grid='integrator',refine=50)
-    tsi, V_s = sol.sample(V,grid='integrator',refine=50)
+    tsi, Vf_s = sol.sample(Vf,grid='integrator',refine=50)
+    tsi, Vr_s = sol.sample(Vr, grid='integrator', refine=50)
     
     tsi, theta_s = sol.sample(theta,grid='integrator',refine=50)
-    tsi, bet_s = sol.sample(bet,grid='integrator',refine=50)
+    #tsi, bet_s = sol.sample(bet,grid='integrator',refine=50)
     axis('equal')
     show(block=True)
 
-    print(tsi,deltaf_s,deltar_s)
+    #print(tsi,V_s)
     #print(len(ts),ts)
     #print(len(tsi),tsi)
     figure()
@@ -190,108 +200,141 @@ def moti():
     legend = plt.legend(['time vs rear steering angle','time vs front steering angle'])
     plt.xlabel('time in sec')
     plt.ylabel('angle in rad')
-    
+
     figure()
 
    
     plot(tsi,theta_s)
+
     
     legend = plt.legend(['time vs yaw angle'])
     plt.xlabel('time in sec')
     plt.ylabel('angle in rad')
+
+    figure()
+    plot(tsi, Vf_s, 'r--')
+    plot(tsi, Vr_s,'b--')
+    #plot(tsi,V_s,'y')
+    legend = plt.legend(['front steering velocity', 'rear steering velocity'])
+    plt.xlabel('time in sec')
+    plt.ylabel('vel in m/s')
+
+    figure()
+    plot(tsi,omega_s)
+    legend = plt.legend(['time vs angular velocity'])
+    plt.xlabel('time in sec')
+    plt.ylabel(' rad/s')
+
     plt.show()
 
+    print(Vr_s,Vf_s)
+
+
+
     if animation:
+    
+
+
         from matplotlib import animation
         import matplotlib.patches as patches
         import matplotlib as mpl
+
 
         fig = plt.figure()
         fig.set_dpi(100)
         fig.set_size_inches(6, 5.5)
 
-        ax = plt.axes(xlim=(-2, 2), ylim=(-2, 6))
+        ax = plt.axes(xlim=(-2, 2), ylim=(-2, 2))
+        ax.set_aspect('equal', adjustable='box')
 
         x_d = x_s
         y_d = y_s
         theta = theta_s
-        deltaf = deltaf_s
-        deltar = deltar_s
+        deltaf=deltaf_s
+        deltar=deltar_s
 
-        # robot dimension
-        height = 0.3
-        width = 1
 
-        # wheel dimension
-        w_h = 0.04
-        w_w = 0.1
+        #robot dimension
+        height=0.3
+        width=1
 
-        vertices = (0, 0)
-        polygon = patches.Rectangle(vertices, width, height, color="red", alpha=0.50)
-        polygon2 = patches.Rectangle(vertices, w_w, w_h, color="blue", alpha=0.50)
-        polygon3 = patches.Rectangle(vertices, w_w, w_h, color="green", alpha=0.50)
+        #wheel dimension
+        w_h=0.04
+        w_w=0.1
+
+        vertices=(0,0)
+        polygon = patches.Rectangle(vertices,width,height,color="red", alpha=0.50)
+        polygon2 = patches.Rectangle(vertices,w_w,w_h,color="blue", alpha=0.50)
+        polygon3 = patches.Rectangle(vertices,w_w,w_h,color="green", alpha=0.50)
 
         def init():
+
             ax.add_patch(polygon)
             ax.add_patch(polygon2)
             ax.add_patch(polygon3)
-            return polygon, polygon2, polygon3
+            return polygon,polygon2,polygon3
 
         def animate(i):
-            # robot patch
 
-            r = np.sqrt((height / 2) ** 2 + (width / 2) ** 2)
-            alpha = np.arctan(height / width)
-            xc = [r * cos(alpha), r * sin(alpha)]
-            xc_w1 = [0, height / 2]
-            xc_w2 = [width, height / 2]
-            x_t = 2 * [None]
-            x_1 = 2 * [None]
-            x_2 = 2 * [None]
-            midPoint = [[0] * 2 for j in range(len(x_d))]
+           #robot patch
 
-            x_t[0] = xc[0] * cos(theta[i]) - xc[1] * sin(theta[i])
-            x_t[1] = xc[0] * sin(theta[i]) + xc[1] * cos(theta[i])
-            x_1[0] = xc_w1[0] * cos(theta[i]) - xc_w1[1] * sin(theta[i])
-            x_1[1] = xc_w1[0] * sin(theta[i]) + xc_w1[1] * cos(theta[i])
-            x_2[0] = xc_w2[0] * cos(theta[i]) - xc_w2[1] * sin(theta[i])
-            x_2[1] = xc_w2[0] * sin(theta[i]) + xc_w2[1] * cos(theta[i])
-            midPoint[i][:] = [x_d[i] - x_t[0], y_d[i] - x_t[1]]
+            r=np.sqrt((height/2)**2+(width/2)**2)
+            alpha=np.arctan(height/width)
+            xc=[r*cos(alpha),r*sin(alpha)]
+            xc_w1=[0,height/2]
+            xc_w2=[width,height/2]
+            x_t=2*[None]
+            x_1=2*[None]
+            x_2=2*[None]
+            midPoint=[[0]*2 for j in range(len(x_d))]
+
+            x_t[0]=xc[0]*cos(theta[i])-xc[1]*sin(theta[i])
+            x_t[1]=xc[0]*sin(theta[i])+xc[1]*cos(theta[i])
+            x_1[0]=xc_w1[0]*cos(theta[i])-xc_w1[1]*sin(theta[i])
+            x_1[1]=xc_w1[0]*sin(theta[i])+xc_w1[1]*cos(theta[i])
+            x_2[0]=xc_w2[0]*cos(theta[i])-xc_w2[1]*sin(theta[i])
+            x_2[1]=xc_w2[0]*sin(theta[i])+xc_w2[1]*cos(theta[i])
+            midPoint[i][:] = [x_d[i]-x_t[0],y_d[i]-x_t[1]]
             r = mpl.transforms.Affine2D().rotate(theta[i])
             r1 = mpl.transforms.Affine2D().rotate(deltar[i])
             r2 = mpl.transforms.Affine2D().rotate(deltaf[i])
-            t = mpl.transforms.Affine2D().translate(midPoint[i][0], midPoint[i][1])
-            t1 = mpl.transforms.Affine2D().translate(x_1[0], x_1[1])
-            t2 = mpl.transforms.Affine2D().translate(x_2[0], x_2[1])
+            t = mpl.transforms.Affine2D().translate(midPoint[i][0],midPoint[i][1])
+            t1 = mpl.transforms.Affine2D().translate(x_1[0],x_1[1])
+            t2 = mpl.transforms.Affine2D().translate(x_2[0],x_2[1])
 
-            tra = r + t + ax.transData
-            tra1 = r1 + r + t + t1 + ax.transData
-            tra2 = r2 + r + t + t2 + ax.transData
+            tra = r +t+ ax.transData
+            tra1 =r1+r+t+t1 + ax.transData
+            tra2 =r2 +r+t+t2 +ax.transData
             polygon.set_transform(tra)
             polygon2.set_transform(tra1)
             polygon3.set_transform(tra2)
 
-            coords = polygon.get_bbox().get_points()
-            # print(tra.transform(coords))
 
-            # wheel patches
+
+            coords = polygon.get_bbox().get_points()
+            #print(tra.transform(coords))
+
+            #wheel patches
+
 
             ax.add_patch(polygon)
             ax.add_patch(polygon2)
             ax.add_patch(polygon3)
 
-            return polygon, polygon2, polygon3
+            return polygon,polygon2,polygon3
 
         anim = animation.FuncAnimation(fig, animate,
                                        init_func=init,
                                        frames=len(x_d),
                                        interval=20,
                                        blit=True)
-        writervideo = animation.FFMpegWriter(fps=60)
-        # anim.save('increasingStraightLine.mp4', writer=writervideo)
+        writervideo =animation.FFMpegWriter(fps=100)
+        #anim.save('increasingStraightLine.mp4', writer=writervideo)
         plt.show()
 
-    return tsi, deltar_s, deltaf_s,V_s,bet_s
+    
+    
+    return tsi, deltar_s, deltaf_s,Vf_s,Vr_s
 
 if __name__ == '__main__':
     moti()
