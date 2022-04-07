@@ -160,7 +160,7 @@ yl=7.5
 ax=plt.axes(xlim=(-xl, +xl), ylim=(-yl, yl), aspect='equal')
 ax.set_xlabel('x(m)')
 ax.set_ylabel('y(m)')
-ax.set_title("robot position")
+ax.set_title("Visualize the orientation and position of robot at 4 points")
 
 for i in range(N):
 
@@ -423,10 +423,10 @@ linewf = [ax.plot([], [], lw=1, markersize=0.3)[0] for _ in range(Nr)]  # lines 
 linewr = [ax.plot([], [], lw=1, markersize=0.3)[0] for _ in range(Nr)]  # lines to animate for rear wheels
 line_ex = [ax.plot([], [], lw=1, markersize=0.1)[0] for _ in
            range(Nr)]  # lines to animate for path followed we only have to plot (x_d[ri,ki]) points
-line_1 = [ax.scatter([], [], s=500, c='blue', marker='o') for _ in range(Nr)]  # initial position
-line_2 = [ax.scatter([], [], s=500, c='blue', marker='1') for _ in range(Nr)]  # initial position
-line_3 = [ax.scatter([], [], s=500, c='blue', marker='+') for _ in range(Nr)]  # initial position
-line_4 = [ax.scatter([], [], s=500, c='red', marker='*') for _ in range(Nr)]  # final position
+line_1 = [ax.scatter([], [], s=50, c='blue', marker='o') for _ in range(Nr)]  # initial position
+line_2 = [ax.scatter([], [], s=50, c='blue', marker='1') for _ in range(Nr)]  # initial position
+line_3 = [ax.scatter([], [], s=50, c='blue', marker='+') for _ in range(Nr)]  # initial position
+line_4 = [ax.scatter([], [], s=50, c='red', marker='*') for _ in range(Nr)]  # final position
 
 lines = line + linewf + linewr + line_ex
 
