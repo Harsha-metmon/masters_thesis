@@ -244,6 +244,8 @@ def create_ocp_stage(ocp):
 
     # Minimal time
     stage.add_objective(stage.T)
+    stage.add_objective(2*stage.integral(Vx ** 2+Vy**2))
+    stage.add_objective(10 * stage.integral(omega ** 2))
     #stage.add_objective(stage.integral(x ** 2))
 
     stage.method(MultipleShooting(N=20, M=2, intg='rk'))
