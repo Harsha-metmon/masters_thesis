@@ -100,7 +100,7 @@ for i in range(N):
     Slider[i].grid(row=i + 1, column=1)
 
 frame_b = Frame()
-canvas = Canvas(master=frame_b, width=cw, height=ch, bg='white')
+canvas = Canvas(master=frame_b, width=cw, height=ch, bg='grey')
 canvas.bind("<Button-1>", myfunction)
 canvas.pack()
 
