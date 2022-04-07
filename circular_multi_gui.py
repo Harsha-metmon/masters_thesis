@@ -104,9 +104,20 @@ canvas = Canvas(master=frame_b, width=cw, height=ch, bg='white')
 canvas.bind("<Button-1>", myfunction)
 canvas.pack()
 
+frame_c=Frame()
+lb = Label(master=frame_c,text="select 4 angles using sliders",fg="red",bg="white",width=100,height=3)
+
+lb.pack()
+
+frame_d=Frame()
+lb2 = Label(master=frame_d,text="select 4 points by clicking on grey canvas",fg="green",bg="white",width=100,height=3)
+lb2.pack()
+
 # Swap the order of `frame_a` and `frame_b`
+frame_d.pack(side='top')
 frame_b.pack()
 frame_a.pack()
+frame_c.pack(side='top')
 
 root.old_coords = 0
 

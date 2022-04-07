@@ -39,7 +39,7 @@ def myfunction(event):
 
     if root.counter<=N:
      root.old_coords = x, y
-     coord.append((x, y))
+     coord.append([x, y])
      create_circle(x, y, 10, canvas)
 
 
@@ -68,14 +68,24 @@ for i in range(N):
 
 
 frame_b = Frame()
-canvas = Canvas(master=frame_b, width=cw, height=ch,bg='white')
+canvas = Canvas(master=frame_b, width=cw, height=ch,bg='grey')
 canvas.bind("<Button-1>", myfunction)
 canvas.pack()
 
+frame_c=Frame()
+lb = Label(master=frame_c,text="select 4 angles using sliders",fg="red",bg="white",width=100,height=3)
+
+lb.pack()
+
+frame_d=Frame()
+lb2 = Label(master=frame_d,text="select 4 points by clicking on grey canvas",fg="green",bg="white",width=100,height=3)
+lb2.pack()
+
 # Swap the order of `frame_a` and `frame_b`
+frame_d.pack(side='top')
 frame_b.pack()
 frame_a.pack()
-
+frame_c.pack(side='top')
 root.old_coords = 0
 
 root.mainloop()
@@ -92,17 +102,22 @@ for i in range(N):
 
 # moving the tp left origin canvas co-ordinates to bottom left cs
 
+#coord=list(coord)
+#print(coord)
+
 for i in range(N):
 
  coord[i][1]=ch-coord[i][1]
+ coord[i][0]=(coord[i][0]-cw/2)*(15/cw)
+ coord[i][1] = (coord[i][1]-ch/ 2)*(15/ch)
 
 
 # visualization
 
 #polygon dimensions
 
-wt=60
-ht=20
+wt=1
+ht=0.3
 
 
 points = np.array([[-0.5 * wt, -0.5 * ht], [+0.5 * wt, -0.5 * ht], [+0.5 * wt, +0.5 * ht], [-0.5 * wt, +0.5 * ht]])
@@ -131,5 +146,4 @@ for i in range(N):
 plt.show()
 
 print("the waypoints selected are: {}".format(coord))
-print("the waypoints selected are: {}".format(coord[0][1]))
 print("the angles selected are: {}".format(ang))
