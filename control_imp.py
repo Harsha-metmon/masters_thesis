@@ -80,12 +80,25 @@ def controller(ref, x, y, theta):
     if deltaf > pi:
         deltaf = deltaf - (2 * pi)
 
+    if deltaf < -pi:
+        deltaf = deltaf + (2 * pi)
+
     # print(math.degrees(deltaf))
 
     if deltar > pi:
         deltar = deltar - (2 * pi)
 
-    if (deltaf > (pi / 2) or deltaf < (-pi / 2)):
+    if deltar < -pi:
+        deltar = deltar + (2 * pi)
+
+
+    delt=0.05*pi
+
+    if (deltaf > ((pi / 2)+delt) or deltaf < ((-pi / 2)-delt)):
+
+        print(math.degrees(deltaf), 'switchedf')
+
+
         Vf = -Vf
         if deltaf > 0:
             deltaf = deltaf - pi
@@ -93,14 +106,43 @@ def controller(ref, x, y, theta):
         elif deltaf < 0:
             deltaf = deltaf + pi
 
+    elif (pi/2 <deltaf<(pi/2+delt)) or (-(pi/2)-delt <deltaf<-pi/2):
+
+        print(math.degrees(deltaf), 'clippedf')
+
+        if deltaf>0:
+            deltaf=pi/2
+        elif deltaf<0:
+            deltaf=-pi/2
+
     # print(math.degrees(deltaf))
 
-    if (deltar > (pi / 2) or deltar < (-pi / 2)):
+    if (deltar > ((pi / 2)+delt) or deltar < ((-pi / 2)-delt)):
+
+        print(math.degrees(deltar), 'switchedr')
+
+        Vr = -Vr
+        if deltar > 0:
+            deltar = deltar - pi
+
+        elif deltar < 0:
+            deltar = deltar + pi
+    elif (pi/2 <deltar<(pi/2+delt)) or (-(pi/2)-delt <deltar<-pi/2):
+
+        print(math.degrees(deltar), 'clippedr')
+
+        if deltar>0:
+            deltar=pi/2
+        elif deltar<0:
+            deltar=-pi/2
+    '''
+    if (deltar > ((pi / 2)) or deltar < ((-pi / 2))):
         Vr = -Vr
         if deltar > 0:
             deltar = deltar - pi
         elif deltar < 0:
             deltar = deltar + pi
+    '''
 
     return p_err, Vf, Vr, deltaf, deltar
 
@@ -133,7 +175,7 @@ def sender(Vf,Vr,deltaf,deltar):
     print(ticksf)
     print(ticksr)
 
-    values = (ticksf, angf, ticksf, angf, ticksr, angr, ticksr, angr)
+    values = (ticksr, angr, ticksr, angr, ticksf, angf, ticksf, angf)
 
     MESSAGE = struct.Struct('B B B B B B B B').pack(*values)
     print("UDP target IP: %s" % UDP_IP)
@@ -148,8 +190,9 @@ def do_control(q,ref,p_err):
     # feedback gain in each direction
     Ts = 0.75
     t = 0
+
     [x,y,theta]=[2,2,2]
-    while (abs(p_err[0]) >= 0.001 or abs(p_err[1]) >= 0.001 or abs(p_err[2]) >= 0.01):
+    while (abs(p_err[0]) >= 0.01 or abs(p_err[1]) >= 0.01 or abs(p_err[2]) >= 0.01):
         # starting from initial state call controller
         try:
             [x, y, theta] = q.get(block=False)
@@ -158,7 +201,6 @@ def do_control(q,ref,p_err):
             [x,y,theta]=[x,y,theta]
 
         [p_err, Vf, Vr, deltaf, deltar] = controller(ref, x, y, theta)
-
         sender(Vf, Vr, deltaf, deltar)
         time.sleep(0.1)
 
@@ -179,7 +221,7 @@ def do_control(q,ref,p_err):
 
 # main
 
-ref = [0, 0, 0]
+ref = [0.2,0.6,0.2]
 
 fig = plt.figure()                            
 fig.set_size_inches(108.5, 10.5)              
@@ -203,4 +245,6 @@ p.start()
 # do control
 
 p.join()
+
+
 
