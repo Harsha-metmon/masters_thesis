@@ -474,4 +474,4 @@ def gui_rock(init_loc):
 if __name__ == '__main__':
 
 
-    gui_rock([0,0,0])
+    gui_rock()

@@ -271,7 +271,7 @@ def do_control(x_in,q,waypoints,p_err):
             x, y, theta = do_feedback(ref, p_err, x, y, theta)
             ff = 1
         '''
-        cur_tim2=(time.time()-st_t1)-0.01
+        cur_tim2=(time.time()-st_t1)-0.02
         print(cur_tim2,'curtime2')
         time.sleep((dt-cur_tim2) - time.time() % (dt-cur_tim2))
         #time.sleep(dt-cur_tim2)
@@ -285,7 +285,7 @@ def do_control(x_in,q,waypoints,p_err):
 p_err=3*[100]
 
 # initial state
-ini=[0.09081649780273438,-0.15568962693214417,-0.019791753962635994]
+ini=[0.27,0.004,0.09]
 
 [x, y, theta] = np.array(ini)
 
