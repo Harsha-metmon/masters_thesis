@@ -87,7 +87,7 @@ ch = 600
 
 
 def myfunction(event):
-
+    canvas.delete('rect')
 
     if root.counter<1:
      root.counter += 1
@@ -95,22 +95,36 @@ def myfunction(event):
      coord.append([x, y])
 
 
+
     if root.counter == Nw:
         print('maximum number of points that can be specified has reached thank you!!')
 
     return coord,ang_l
 
+
+
+
+
+
+
 def get_slider(event):
     ang=gui_variable[0].get()
+    kk = len(ang_l)
     ang_l.append(ang)
-    create_rect(coord[0][-2], coord[0][-1], ang_l[-1], canvas)
 
-    #canvas.delete('rect')
+    if len(ang_l)>kk:
+        print(kk,'kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk')
+        print(len(ang_l),'anglllllllllllllllllllllllllllll')
+        root.counter += 1
+        if root.counter >=1:
+
+         canvas.delete('rect')
+         create_rect(coord[0][-2], coord[0][-1], ang_l[-1], canvas)
 
 frame_a = Frame()
 Slider = [None] * Nw
 ang = []
-global gui_variable
+#global gui_variable
 gui_variable = [None] * Nw
 
 for i in range(Nw):
@@ -177,8 +191,8 @@ for i in range(Nw):
 
 # points=[[coord[0][0],coord[0][1],ang[0]],[coord[1][0],coord[1][1],ang[1]],[coord[2][0],coord[2][1],ang[2]],[coord[3][0],coord[3][1],ang[3]]]
 coord_1 = [[coord[0][0], coord[0][1], ang[0]]]
-print(coord_1,'coooooooooooooooooooords')
-print(ang_l,'ang_lllllllllllllllllllllll')
+#print(coord_1,'coooooooooooooooooooords')
+#print(ang_l,'ang_lllllllllllllllllllllll')
 
 # visualization
 
@@ -212,12 +226,12 @@ for i in range(Nw):
     yy = np.concatenate((yy, np.array([x_t[0, 1]])))
 
     ax.plot(xx, yy)
-print(x_r)
+#print(x_r)
 
 plt.show()
 
-print("the waypoints selected are: {}".format(coord))
-print("the angles selected are: {}".format(ang))
+#print("the waypoints selected are: {}".format(coord))
+#print("the angles selected are: {}".format(ang))
 
 # run eagle here and get the lacation to be the first point
 
