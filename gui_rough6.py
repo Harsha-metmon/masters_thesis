@@ -30,7 +30,7 @@ root = Tk()
 root.counter = 0
 
 
-def create_rect(x, y, ang, canvas, tag,fil):  # center coordinates, radius
+def create_rect(x, y, angle, canvas, tag,fil):  # center coordinates, radius
 
     if fil==1:
         fill='red'
@@ -53,7 +53,7 @@ def create_rect(x, y, ang, canvas, tag,fil):  # center coordinates, radius
     x = (x - cw / 2) * (B / cw)
     y = (y - ch / 2) * (L / ch)
 
-    ang = (pi / 180) * ang
+    angle = (pi / 180) * angle
 
     points = np.array([[-0.5 * wt, -0.5 * ht], [+0.5 * wt, -0.5 * ht], [+0.5 * wt, +0.5 * ht], [-0.5 * wt, +0.5 * ht]])
 
@@ -64,8 +64,8 @@ def create_rect(x, y, ang, canvas, tag,fil):  # center coordinates, radius
     yl = 1.5
 
     for j in range(len(points)):
-        x_r[j, 0] = points[j, 0] * np.cos(ang) - points[j, 1] * np.sin(ang)
-        x_r[j, 1] = points[j, 0] * np.sin(ang) + points[j, 1] * np.cos(ang)
+        x_r[j, 0] = points[j, 0] * np.cos(angle) - points[j, 1] * np.sin(angle)
+        x_r[j, 1] = points[j, 0] * np.sin(angle) + points[j, 1] * np.cos(angle)
         x_t[j, :] = x_r[j, 0] + x, x_r[j, 1] + y
 
     mm = x_t
@@ -92,6 +92,8 @@ coord=[]
 for i in range(Nw):
  ang_l[i] =[]
 
+
+
 # canvas dimensions
 
 cw = 600
@@ -111,22 +113,17 @@ def myfunction(event):
     if root.counter == Nw:
         print('maximum number of points that can be specified has reached thank you!!')
 
-    return coord, ang_l
+    return coord
 
 
 def get_slider(event,k):
-    print(k, 'kkkkkkkkkkkkkkkkkkkkkk')
     ang[k] = gui_variable[k].get()
-
-
-    kk = len(ang_l[k])
+    #kk = len(ang_l[k])
     ang_l[k].append(ang[k])
     if len(ang_l[k])>0:
       canvas.delete(t_g[k])
-
-
     #if len(ang_l[k]) > kk:
-    canvas.delete(t_g[k])
+    #canvas.delete(t_g[k])
     create_rect(coord[k][-2], coord[k][-1], ang_l[k][-1], canvas, t_g[k],1)
     if k==Nw-1:
       canvas.delete(t_g[Nw])
@@ -171,15 +168,16 @@ root.old_coords = 0
 
 root.mainloop()
 
-'''
 
 # degrees to rad conversion
 
-
 for i in range(Nw):
-    ang[i] = gui_variable[i].get()
-    ang[i] = ang_deg[i] * (pi / 180)
-    ang.append(ang[i])
+
+    ang[i] = ang[i] * (pi / 180)
+    
+
+print(ang,'final anglessssssssssssssssssssss')
+'''
 
 # mapping from local to world co-ordinates
 
