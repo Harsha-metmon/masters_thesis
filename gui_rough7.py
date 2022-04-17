@@ -12,6 +12,7 @@ from numpy import pi, cos, sin, tan, arctan2, arctan, sqrt
 from matplotlib import animation
 from tkinter import *
 from functools import partial
+import pdb as pdb
 
 
 # GUI+ROCKIT
@@ -91,41 +92,52 @@ def create_rect(x, y, angle, canvas, tag,fil):  # center coordinates, radius
 
 # Number of waypoints
 
-Nw = 3
+Nw = [3,2,4]
 
 #Number of robots
 
-Nr=2
+Nr=3
 
-ang_l=[[[] for j in range(Nw)] for i in range(Nr)]
+
+
+ang_l=[[[] for j in range(Nw[i])] for i in range(Nr)]
+print(ang_l,'angllllllllllllllllllllllllllllllllllllllllllll')
 
 coord=[[] for i in range(Nr)]
-
 
 # canvas dimensions
 
 cw = 600
 ch = 600
 
-t_g = [['rect1', 'rect2', 'rect3', 'rect4'],['rect12', 'rect22', 'rect32', 'rect42']]
+t_g = [['rect1', 'rect2', 'rect3', 'rect4'],['rect12', 'rect22', 'rect32', 'rect42'],['rect13', 'rect23', 'rect33', 'rect43']]
 
 
 global m
 m=0
 
+global n
+n=0
+
 def myfunction(event):
-    if root.counter < Nw*Nr:
+
+    if root.counter < sum(Nw):
         root.counter += 1
         x,y = event.x,event.y
         global m
         coord[m].append([x, y])
         lp_count = len(coord[m])
-        create_rect(x, y, 0, canvas, t_g[m][lp_count], 3)
-        if root.counter%Nw==0:
+        create_rect(x, y, 0, canvas, t_g[m][lp_count-1], 3)
+
+        global n
+
+        n += 1
+
+        if (n==Nw[m] and root.counter<(sum(Nw)-1)):
             m+=1
+            n=0
 
-
-    if root.counter == Nw*Nr:
+    if root.counter == sum(Nw):
         print('maximum number of points that can be specified has reached thank you!!')
 
     return coord
@@ -133,6 +145,7 @@ def myfunction(event):
 
 def get_slider(event,l, k):
     ang[l][k] = gui_variable[l][k].get()
+    print(l,k,'lkkkkkkkkkkkkkkkkkkkkkkkkk')
     # kk = len(ang_l[k])
     ang_l[l][k].append(ang[l][k])
     if len(ang_l[l][k]) > 0:
@@ -140,19 +153,19 @@ def get_slider(event,l, k):
     # if len(ang_l[k]) > kk:
     # canvas.delete(t_g[k])
     create_rect(coord[l][k][-2], coord[l][k][-1], ang_l[l][k][-1], canvas, t_g[l][k], l)
-    if k == Nw - 1:
+    if k == (sum(Nw) - 1):
         canvas.delete(t_g[l][Nw])
 
 
 frame_a = Frame()
-Slider = [[[] for j in range(Nw)] for i in range(Nr)]
-ang = [[[] for j in range(Nw)] for i in range(Nr)]
+Slider = [[[] for j in range(Nw[i])] for i in range(Nr)]
+ang = [[[] for j in range(Nw[i])] for i in range(Nr)]
 # global gui_variable
-gui_variable = [[[] for j in range(Nw)] for i in range(Nr)]
+gui_variable = [[[] for j in range(Nw[i])] for i in range(Nr)]
 
 
 for j in range(Nr):
-  for i in range(Nw):
+  for i in range(Nw[j]):
     gui_variable[j][i] = IntVar()
     Slider[j][i] = Scale(master=frame_a, from_=0, to=360, length=600, tickinterval=30,
                       variable=gui_variable[j][i], orient=HORIZONTAL, command=partial(get_slider,l=j ,k=i))
