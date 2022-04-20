@@ -74,6 +74,11 @@ Nw = 4
 cw = 600
 ch = 600
 
+#dimensions of room
+
+xl=7.5
+yl=7.5
+
 
 def myfunction(event):
     root.counter += 1
@@ -148,8 +153,8 @@ for i in range(Nw):
 
 for i in range(Nw):
     coord[i][1] = ch - coord[i][1]
-    coord[i][0] = (coord[i][0] - cw / 2) * (15 / cw)
-    coord[i][1] = (coord[i][1] - ch / 2) * (15 / ch)
+    coord[i][0] = (coord[i][0] - cw / 2) * (xl / cw)
+    coord[i][1] = (coord[i][1] - ch / 2) * (yl / ch)
 
 # visualization
 
@@ -161,9 +166,6 @@ ht = 0.3
 points = np.array([[-0.5 * wt, -0.5 * ht], [+0.5 * wt, -0.5 * ht], [+0.5 * wt, +0.5 * ht], [-0.5 * wt, +0.5 * ht]])
 x_r = np.array([[0 for m in range(2)] for n in range(4)], dtype='float')
 x_t = np.array([[0 for m in range(2)] for n in range(4)], dtype='float')
-
-xl = 5
-yl = 5
 
 ax = plt.axes(xlim=(-xl, +xl), ylim=(-yl, yl), aspect='equal')
 ax.set_xlabel('x(m)')
@@ -251,8 +253,8 @@ def create_ocp_stage(ocp):
     stage.subject_to(0 <= (Vrs <= vmax ** 2))
     stage.subject_to(0 <= (Vfs <= vmax ** 2))
 
-    stage.subject_to(-7.5 <= (x <= 7.5))
-    stage.subject_to(-7.5 <= (y <= 7.5))
+    stage.subject_to(-xl <= (x <= xl))
+    stage.subject_to(-yl <= (y <= yl))
 
     # Minimal time
     # stage.add_objective(stage.T)
@@ -271,14 +273,27 @@ d1 = sqrt((points[1][0] - points[0][0]) ** 2 + (points[1][1] - points[0][1]) ** 
 d2 = sqrt((points[2][0] - points[1][0]) ** 2 + (points[2][1] - points[1][1]) ** 2)
 d3 = sqrt((points[3][0] - points[2][0]) ** 2 + (points[3][1] - points[2][1]) ** 2)
 
-M = 5
-N = 21
+
+deg1=abs((points[1][2]-points[0][2]))
+deg2=abs((points[2][2] - points[1][2]))
+deg3=abs((points[3][2] - points[2][2]))
+
 vmax = 0.0123
-factor = 2
+
+factor1=5
+factor2=0.01
+factor1 = 30
+factor2 = 0.2
+
+omg_max=vmax
 
 # Shoot up the ball
 
-a = factor * (d1 / vmax)
+N=21+round((80/22)*float(d1))
+a = ((d1 / vmax)+(deg1/omg_max))+(factor1*d1)+(factor2*deg1)
+M=int(round(a/(0.5*N)))
+
+# Shoot up the ball
 
 stage1, x1, y1, theta1, Vx1, Vy1, omega1 = create_ocp_stage(ocp)
 ocp.subject_to(stage1.t0 == 0)  # Stage starts at time 0
@@ -299,7 +314,9 @@ stage1.set_initial(theta1, np.linspace(points[0][2], points[1][2], N))
 
 # After bounce 1
 
-a = factor * (d2 / vmax)
+N = 21 + round((80 / 22) * float(d2))
+a = ((d2 / vmax)+(deg2/omg_max))+(factor1*d2)+(factor2*deg2)
+M = int(round(a / (0.5 * N)))
 
 stage2, x2, y2, theta2, Vx2, Vy2, omega2 = create_ocp_stage(ocp)
 
@@ -315,8 +332,9 @@ stage2.subject_to(stage2.at_tf(y2) == points[2][1])
 stage2.subject_to(stage2.at_tf(theta2) == points[2][2])
 
 # After bounce 2
-
-a = factor * (d3 / vmax)
+N = 21 + round((80 / 22) * float(d3))
+a = ((d3 / vmax)+(deg3/omg_max))+(factor1*d3)+(factor2*deg3)
+M = int(round(a / (0.5 * N)))
 
 stage3, x3, y3, theta3, Vx3, Vy3, omega3 = create_ocp_stage(ocp)
 
@@ -459,6 +477,12 @@ def controller(ref, inp, x, y, theta, ff):
         vy = k2 * p_err[1]
         omega = k3 * p_err[2]
 
+    elif (ff==1):
+
+        vx = inp[0]
+        vy = inp[1]
+        omega = inp[2]
+
     else:
         vx = inp[0] + k1 * p_err[0]
         vy = inp[1] + k2 * p_err[1]
@@ -546,8 +570,9 @@ def sender1(Vf, Vr, deltaf, deltar):
 def update(x, y, theta, Vf, Vr, deltaf, deltar, dt):
     lr = 0.5
     lf = 0.5
-    p_noise = 0.01
-    m_noise = 0.01  # (1 mm)
+    p_noise = 0.001
+    m_noise = 0.001  # (1 mm)
+
     # m_noise=0
     p_n = p_noise * np.random.rand(3, 1)
     m_n = m_noise * np.random.rand(3, 1)
@@ -649,7 +674,7 @@ val_log = []
 
 start_t = time.time()
 
-ff = 1
+ff = 0
 
 targ_ind=len(waypoints)-1
 
@@ -668,18 +693,18 @@ plt.plot(waypoints[:,0], waypoints[:, 1], "m--")
 
 t=0
 
-while ind_last<=targ_ind:
-    #for ind_last in range(len(waypoints)):
+#while ind_last<=targ_ind-1:
+for ind_last in range(len(waypoints)):
     pose=[x,y,theta]
 
-    clp_ind=find_closest_point(pose, ref_path, start_index)
+    #clp_ind=find_closest_point(pose, ref_path, start_index)
     #print(clp_ind,'clppppppppppppppppppppp')
 
-    ind_last=index_last_point_fun(clp_ind, ref_path, 0.1)
+    #ind_last=index_last_point_fun(clp_ind, ref_path, 0.1)
 
     print(ind_last,'llllllllllllllllllllllll')
 
-    start_index=ind_last+1
+    start_index+=1
 
     #ref = waypoints[j, :]
     ref=waypoints[ind_last,:]
@@ -691,13 +716,9 @@ while ind_last<=targ_ind:
     else:
         dt = diff_t[ind_last - 1]
 
-    # starting from initial state call controller
-    print(j)
-    # pdb.set_trace()
-    if j > 0:
-        x_log.append(x)
-        y_log.append(y)
-        theta_log.append(theta)
+    x_log.append(x)
+    y_log.append(y)
+    theta_log.append(theta)
 
     [p_err, Vf, Vr, deltaf, deltar] = controller(ref, inp, x, y, theta, ff)
 
@@ -708,7 +729,7 @@ while ind_last<=targ_ind:
     #time.sleep(dt)
     t = t + dt
 
-    [x, y, theta, vx, vy, omega] = update(x, y, theta, Vf, Vr, deltaf, deltar, 4*dt)
+    [x, y, theta, vx, vy, omega] = update(x, y, theta, Vf, Vr, deltaf, deltar, dt)
 
     # print(Vf, Vr, math.degrees(deltaf), math.degrees(deltar))
     # print(dt,'dttttttttttttttttttttttttttt')
@@ -720,10 +741,13 @@ while ind_last<=targ_ind:
     plt.plot(x, y, "ob", label="trajectory")
 
     plt.axis("equal")
+
     plt.grid(True)
     plt.pause(0.00001)
     plt.axis('tight')
     # print(p_err)
+
+
 
 
 # Animation
