@@ -66,16 +66,15 @@ def controller(ref,inp, x, y, theta,ff):
         p_err[1] = ref[1] - y
         p_err[2] = ref[2] - theta
 
-        if ff == 0:
 
-            vx = k1 * p_err[0]
-            vy = k2 * p_err[1]
-            omega = k3 * p_err[2]
+        vxf = k1 * p_err[0]
+        vyf = k2 * p_err[1]
+        omegaf = k3 * p_err[2]
 
-        else:
-            vx = inp[0]
-            vy = inp[1]
-            omega = inp[2]
+
+        vx = inp[0]
+        vy = inp[1]
+        omega =inp[2]
 
         numr = (+vy - (omega * Lr * cos(theta)))
         denr = (+vx + (omega * Lr * sin(theta)))
@@ -133,8 +132,8 @@ def controller(ref,inp, x, y, theta,ff):
                 deltar = deltar - pi
             elif deltar < 0:
                 deltar = deltar + pi
-        print([p_err, Vf, Vr, deltaf, deltar],'return valuesssssssssssssssssssssss')
-        return p_err, Vf, Vr, deltaf, deltar
+
+        return p_err, Vf, Vr, deltaf, deltar,vx,vy,omega,vxf,vyf,omegaf
 
 
 
@@ -166,29 +165,32 @@ def sender(Vf,Vr,deltaf,deltar):
 
 
     MESSAGE = struct.Struct('B B B B B B B B').pack(*values)
-    print("UDP target IP: %s" % UDP_IP)
-    print("UDP target port: %s" % UDP_PORT)
+    #print("UDP target IP: %s" % UDP_IP)
+    #print("UDP target port: %s" % UDP_PORT)
     sock = socket.socket(socket.AF_INET,  # Internet
                          socket.SOCK_DGRAM)  # UDP
     sock.sendto(MESSAGE, (UDP_IP, UDP_PORT))
 
 
-
 def do_feedback(ref,p_err,x,y,theta):
     inp = [None] * 3
     ff=0
-    while (abs(p_err[0]) >= 0.01 or abs(p_err[1]) >= 0.01 or abs(p_err[2]) >= 0.01):
+    while (abs(p_err[0]) >= 0.05 or abs(p_err[1]) >= 0.05 or abs(p_err[2]) >= 0.05):
 
 
         [p_err, Vf, Vr, deltaf, deltar] = controller(ref, inp, x, y, theta,ff)
 
         sender(Vf, Vr, deltaf, deltar)
 
-        dt=0.4
+        dt=0.1
 
         time.sleep(dt)
 
+        try:
+            [x, y, theta] = q.get(block=False)
 
+        except:
+            [x, y, theta] = [x, y, theta]
 
 
         plt.plot(x, y, "og", label="trajectory")
@@ -199,35 +201,33 @@ def do_feedback(ref,p_err,x,y,theta):
         plt.axis('tight')
     return x,y,theta
 
-
-
 def do_control(x_in,q,waypoints,p_err):
 
     ff = 1
 
-    st_t = time.time()
+
 
     # feedback gain in each direction
-    Ts = 0.1
 
     total_t = 0
     t_error = 0
 
+    t=0
     # simulation
     [x,y,theta]=x_in
     plt.plot(waypoints[:, 0], waypoints[:, 1], "m--")
-
-
-    for j in range(0, len(waypoints-3)):
-
+    textfile = open("a_file.txt", "w")
+    for j in range(0, len(waypoints)-1):
+        st_1 = time.time()
         ref = waypoints[j, :]
         inp = [Vx_i[j], Vy_i[j], omega_i[j]]
+
 
         if diff_t[j]==0:
             dt = diff_t[j-1]
         else:
             dt = diff_t[j]
-        t = 0
+
 
         # print(ref)
         p_err = 3 * [100]
@@ -240,43 +240,61 @@ def do_control(x_in,q,waypoints,p_err):
         except:
             [x, y, theta] = [x, y, theta]
 
-        cur_tim = (time.time() - st_t)
-        print(x,y,theta,'fromthecontrollerrrrrrrrrrrrrrrrrrrrrrrrrr')
-        p_err, Vf, Vr, deltaf, deltar = controller(ref,inp, x, y, theta,ff)
+        p_err, Vf, Vr, deltaf, deltar,vx,vy,omega,vxf,vyf,omegaf = controller(ref,inp, x, y, theta,ff=1)
 
-        st_t1 = time.time()
+        vxl.append(vx)
+        vyl.append((vy))
+        omegal.append(omega)
+        vxfl.append(vxf)
+        vyfl.append(vyf)
+        omegafl.append(omegaf)
+        st_2 = (time.time()-st_1)
+        # average value of st_2 is 0.0017
+        #print(st_2,'st22222222222222222222222')
+        #if j>0:
+         #time.sleep(dt-st_2)
+
         sender(Vf, Vr, deltaf, deltar)
+        t_exp.append(t)
+        t+=dt
+
+        #textfile.write(str(vx)+ '\n')
+        yyy=[vx,vy,omega]
+        textfile.write("{0}\t{1}\t{2}\n".format(*yyy))
 
         #run controller at 10 Hz
 
+        st_3=time.time()
 
-        plt.gcf().canvas.mpl_connect('key_release_event',
-                                     lambda event: [exit(0) if event.key == 'escape' else None])
+        ax.plot(waypoints[j, 0], waypoints[j, 1], "or", label="course")
 
-        plt.plot(waypoints[j, 0], waypoints[j, 1], "or", label="course")
         # print(waypoints[j,:])
 
-        plt.plot(x, y, "ob", label="trajectory")
-        plt.axis("equal")
-        plt.grid(True)
+        ax.plot(x, y, "ob", label="trajectory")
+        ax.axis("equal")
+        ax.grid(True)
         plt.pause(0.00001)
-        plt.axis('tight')
+        ax.axis('tight')
 
         # print(p_err)
 
         t_error += abs(p_err[0]) + abs(p_err[1]) + abs(p_err[2])
         total_t += t
+
+        # avg st_4 is 0.17
+        st_4=(time.time()-st_3)
+        #print(st_4,'st4444444444444444444444444444444444444444444444')
+
         '''
-        if (round(cur_tim % 10) == 0):
-            x, y, theta = do_feedback(ref, p_err, x, y, theta)
-            ff = 1
+        if (j%10 == 0):
+         x, y, theta = do_feedback(ref, p_err, x, y, theta)
+         ff = 1
         '''
-        cur_tim2=(time.time()-st_t1)-0.02
-        print(cur_tim2,'curtime2')
-        time.sleep((dt-cur_tim2) - time.time() % (dt-cur_tim2))
+
         #time.sleep(dt-cur_tim2)
     plt.close()
-
+    #textfile.close()
+    quit()
 
 #fig = plt.figure()
 #fig.set_size_inches(108.5, 10.5)
@@ -285,26 +303,47 @@ def do_control(x_in,q,waypoints,p_err):
 p_err=3*[100]
 
 # initial state
-ini=[0.27,0.004,0.09]
+ini=[-0.1454,-0.712, -0.002]
+
+
 
 [x, y, theta] = np.array(ini)
 
+
+
 [points,Vx_i,Vy_i,omega_i,diff_t]=gui_rock(ini)
 
-fig = plt.figure()
-fig.set_size_inches(108.5, 10.5)
+
+ax = plt.axes(xlim=(0.3, -0.3), ylim=(-0.3, 0.3),aspect='equal')
+#ax.set_size_inches(108.5, 10.5)
+
 
 #waypoints=np.array([[0.6,0.7,0.6],[0.3,0.7,0.5],[0.2,0.6,0.2]])
 waypoints=np.array(points)
 
+
 # ang = np.linspace(2 * pi, pi, Nw)
 # waypoints = np.array([(np.cos(0.1 * i), np.sin(0.1 * i), ang[i]) for i in range(Nw)])
-print(waypoints)
+print(len(waypoints),'lengthofwaypointssssssssssssssssssssssssssssssssssss')
+print(len(diff_t),'lennnnnnnnnnnnnnnnnnnnnnnnn')
+print(len(Vx_i))
 
 q = multiprocessing.Queue()
 p = multiprocessing.Process(target=do_control, args=(ini,q,waypoints,p_err))
 ctx = zmq.Context()
 chat_pipe = zhelper.zthread_fork(ctx, receive_eagle, q)
+
+manager=multiprocessing.Manager()
+vxl = []
+vyl = manager.list()
+omegal = manager.list()
+
+vxfl = manager.list()
+vyfl = manager.list()
+omegafl = manager.list()
+
+t_exp=manager.list()
+
 
 p.start()
 
@@ -318,5 +357,36 @@ p.start()
 
 # do control
 
+
+
 p.join()
+
+'''
+print((type(vxl)),'vxllllllllllllllll')
+print((type(t_exp)),'txpppppppppppppp')
+
+vxl=list(vxl)
+t_exp=list(t_exp)
+print(vxl,'cccccccccccccccccccccccccccccccccc')
+print(t_exp,'cccccccccccccccccccccccccccccccccc')
+
+textfile = open("a_file.txt", "w")
+
+for element in vxl:
+
+    textfile.write(element + "\n")
+
+textfile.close()
+
+
+plt.figure()
+
+plt.plot(t_exp,vxl)
+plt.plot(t_exp,vxfl)
+plt.title('feedforward,feedback')
+plt.show()
+
+'''
+
+
 
