@@ -42,10 +42,10 @@ gui_variable2=IntVar()
 gui_variable3=IntVar()
 
 # Creating two sliders to get user defined length and width
-Slider1 = Scale(mainframe, from_=1, to=15, length=600,tickinterval=1,variable=gui_variable1, orient=HORIZONTAL)
+Slider1 = Scale(mainframe, from_=5, to=20, length=600,tickinterval=1,variable=gui_variable1, orient=HORIZONTAL)
 Slider1.set(1)
 Slider1.grid(row =1, column = 2)
-Slider2 = Scale(mainframe, from_=1, to=15, length=600,tickinterval=1,variable=gui_variable2, orient=HORIZONTAL)
+Slider2 = Scale(mainframe, from_=5, to=20, length=600,tickinterval=1,variable=gui_variable2, orient=HORIZONTAL)
 Slider2.set(1)
 Slider2.grid(row = 3, column=2)
 Slider3 = Scale(mainframe, from_=1, to=4, length=600,tickinterval=1,variable=gui_variable3, orient=HORIZONTAL)
@@ -134,8 +134,8 @@ def create_rect(x, y, angle, canvas, tag,fil):  # center coordinates, radius
     xl = slider_value1
     yl = slider_value2
 
-    wt = (cw/xl)*0.01
-    ht = (ch/yl)*0.003
+    wt = 1
+    ht =0.3
 
     # forward transformation to world co-ordinates here
 
