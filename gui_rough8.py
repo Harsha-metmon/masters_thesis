@@ -249,6 +249,12 @@ for j in range(Nr):
     Slider[j][i].grid(row=i + 1, column=j+1)
 
 
+for j in range(Nr):
+    for i in range(Nw[j]):
+        if not ang[j][i]:
+            ang[j][i]=0
+
+
 frame_b = Frame()
 canvas = Canvas(master=frame_b, width=cw, height=ch, bg='grey')
 canvas.create_line(cw/2 - 20, cw/2, cw/2 + 20, cw/2)
@@ -280,14 +286,26 @@ root.mainloop()
 
 # format==> we can write a dict ==> number of robots, dimensions of warehouse, pos and orientation of waypoints for each of the robot (a variable).
 dictionary = {'room_width': slider_value1, 'room_height': slider_value2, 'number_robots': slider_value3}
-dicts = {}
+dicts = []
+angs=[]
 keys = range(len(coord))
+#print(coord),'coooooooooooooord')
+
 for i in keys:
-        dicts[i] = coord[i]
+        dicts.append(coord[i])
+        angs.append(ang[i])
+data={'choreography 1': [{'Number of robots': slider_value3,
+           'room length and width': [slider_value1,slider_value2]},
+          {'robot locations': dicts,'robot angles':angs}]}
 
 
 with open('users.yaml', 'w') as f:
-    data = yaml.dump(dictionary, f)
-    data2=yaml.dump(dicts,f)
-print(yaml.dump(dictionary))
-print(yaml.dump(dicts))
+    #data = yaml.dump(dictionary, f)
+    data2=yaml.dump(data,f)
+#print(yaml.dump(dictionary))
+print(yaml.dump(data))
+
+
+
+
+
