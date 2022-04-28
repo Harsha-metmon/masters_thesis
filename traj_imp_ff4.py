@@ -55,19 +55,26 @@ def controller(ref,inp, x, y, theta,ff):
         delt_max = pi / 2
         saturation = 1
 
-        k1=0.3
-        k2=0.3
-        k3=0.3
+        k1=0.2
+        k2=0.5
+        k3=0.5
 
         p_err = 3 * [0]
         p_err[0] = ref[0] - x
         p_err[1] = ref[1] - y
         p_err[2] = ref[2] - theta
 
+        vxff = inp[0]
+        vyff = inp[1]
+        omegaff = inp[2]
 
         vxfb = k1 * p_err[0]
         vyfb = k2 * p_err[1]
         omegafb = k3 * p_err[2]
+
+        vxc = (k1 * p_err[0]) + inp[0]
+        vyc = (k2 * p_err[1]) + inp[1]
+        omegac = (k3 * p_err[2]) + inp[2]
 
         if ff==1:
 
@@ -157,7 +164,7 @@ def controller(ref,inp, x, y, theta,ff):
             elif deltar < 0:
                 deltar = deltar + pi
 
-        return p_err,vx,vy,omega,vxfb,vyfb,omegafb,Vf,deltaf,Vr,deltar
+        return p_err,vx,vy,omega,vxff,vyff,omegaff,vxfb,vyfb,omegafb,vxc,vyc,omegac,Vf,deltaf,Vr,deltar
 
 
 
@@ -188,7 +195,7 @@ def sender(Vf,Vr,deltaf,deltar):
 
     values = (ticksr, angr, ticksr, angr, ticksf, angf, ticksf, angf)
 
-    print(values,'valueeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
+    #print(values,'valueeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
     #print(Vf,Vr,math.degrees(deltaf),math.degrees(deltar),'valuesbefore')
     MESSAGE = struct.Struct('B B B B B B B B').pack(*values)
     #print("UDP target IP: %s" % UDP_IP)
@@ -238,7 +245,10 @@ def do_control(x_in,q,waypoints,p_err):
             [t_eag,x, y, theta] = [t_eag,x, y, theta]
             flag=0
 
-        p_err,vx,vy,omega,vxfb,vyfb,omegafb,Vf,deltaf,Vr,deltar = controller(ref,inp, x, y, theta,ff)
+
+        print(x,y,theta,x_in[2],'pose of the robottttttttttttttttttt')
+
+        p_err,vx,vy,omega,vxff,vyff,omegaff,vxfb,vyfb,omegafb,vxc,vyc,omegac,Vf,deltaf,Vr,deltar = controller(ref,inp, x, y, theta,ff)
 
         # derivative
 
@@ -264,15 +274,15 @@ def do_control(x_in,q,waypoints,p_err):
         sender(Vf, Vr, deltaf, deltar)
         t_exp.append(t)
         t+=dt
-        time.sleep(dt)
+        time.sleep(dt-0.01)
         #textfile.write(str(vx)+ '\n')
         if j==0:
             vx_e=0
             vy_e=0
             omega_e=0
-        yyy=[t,vx,vy,omega,vxfb,vyfb,omegafb,t_eag,vx_e,vy_e,omega_e]
+        yyy=[t,vxff,vyff,omegaff,vxfb,vyfb,omegafb,vxc,vyc,omegac,t_eag,vx_e,vy_e,omega_e]
 
-        textfile.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\n".format(*yyy))
+        textfile.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\t{11}\t{12}\t{13}\n".format(*yyy))
 
         #run controller at 10 Hz
         st_3=time.time()
@@ -320,7 +330,7 @@ p_err=3*[100]
 # initial state
 
 init_loc = [0, 0, 0]
-fin_loc = [0, 1, 0]
+fin_loc = [0.2, -0.4, -pi/6]
 
 
 [points,Vx_i,Vy_i,omega_i,diff_t,t_s]=gui_rock(init_loc,fin_loc)
