@@ -131,10 +131,19 @@ def gui_rock(init_loc,fin_loc):
     for i in ind_same:
         loc_s.append(init_loc[i])
 
+    print(init_loc,'initialllllllllllllllllllllllllllllllllllllllllll')
+    print(ind_same, 'initialllllllllllllllllllllllllllllllllllllllllll')
 
-    for i in ind_same:
-        del init_loc[i]
-        del fin_loc[i]
+
+    def delete_multiple_element(list_object, indices):
+        indices = sorted(indices, reverse=True)
+        for idx in indices:
+            if idx < len(list_object):
+                list_object.pop(idx)
+
+    delete_multiple_element(init_loc,ind_same)
+    delete_multiple_element(fin_loc, ind_same)
+
 
     print(Fin_con,'finnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnconnnnnnnnnnnnnnnnn')
 
@@ -145,7 +154,6 @@ def gui_rock(init_loc,fin_loc):
     ########################################################################################
     #preprocessing of initcon and fincon to make sure there the shortest theta is traversed.
     #######################################################################################
-
 
 
     for i in range(robotN):
@@ -332,7 +340,7 @@ def gui_rock(init_loc,fin_loc):
                     ocp.subject_to(ax[i][j] * q[0] + ay[i][j] * q[1] >= sft + b[i][j])
 
                 ocp.subject_to(ax[i][j] ** 2 + ay[i][j] ** 2 <= 1)
-    
+
     #ocp.add_objective(10* ocp.T)
     ocp.add_objective(2 * ocp.integral(sum(i*i for i in Vx)+sum(i*i for i in Vy)))
     ocp.add_objective(2 * ocp.integral(sum(i*i for i in omega)))
@@ -460,7 +468,6 @@ def gui_rock(init_loc,fin_loc):
         y_d_s=np.array([i[1] for i in loc_s])
         theta_d_s=np.array([i[2] for i in loc_s])
 
-
         print(np.shape(theta))
 
         #number of dynamic robots
@@ -570,8 +577,6 @@ def gui_rock(init_loc,fin_loc):
 
                 ln.set_data(xx,yy)
 
-
-
                 #wheels
 
             for k, ln in enumerate(linewf):
@@ -619,12 +624,7 @@ def gui_rock(init_loc,fin_loc):
             for k, ln in enumerate(line_ex):
                ln.set_data(x_d[k,:i],y_d[k,:i])
 
-            '''
-            
-            for k, ln in enumerate(line_circ):
-                ts = np.linspace(0, 2 * pi, 100)
-                ln.set_data(x_d[k,i] + r0 * cos(ts),y_d[k,i] + r0 * sin(ts))
-            '''
+
             for k, ln in enumerate(line_in):
                 ln.set_offsets([x_d[k, 0],y_d[k, 0]])
 
