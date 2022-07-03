@@ -87,7 +87,8 @@ def gui_rock(init_loc,fin_loc):
             ind_same.append(i)
 
     # create vertices of rectangles for stationary robots
-
+    
+    print(len(init_loc),len(ind_same),'indsameeeeeeeeeeeeeeeeeeeeeeeeeeee')
 
     robotN = len(init_loc)-len(ind_same)
 
@@ -131,7 +132,7 @@ def gui_rock(init_loc,fin_loc):
     for i in ind_same:
         loc_s.append(init_loc[i])
 
-    print(init_loc,'initialllllllllllllllllllllllllllllllllllllllllll')
+
     print(ind_same, 'initialllllllllllllllllllllllllllllllllllllllllll')
 
 
@@ -181,10 +182,12 @@ def gui_rock(init_loc,fin_loc):
 
     deg=[None]*robotN
 
+    print(robotN,'robotN')
+
     for i in range (robotN):
 
      d[i] = sqrt((Fin_con[i][0] - Init_con[i][0]) ** 2 + (Fin_con[i][1] - Init_con[i][1]) ** 2)
-
+     print(i,d[i],'wtffffffffffffffffffffffffffffffffffff')
      deg[i] = abs((Fin_con[i][2] - Init_con[i][2]))
 
     d1=max(d)
@@ -435,9 +438,6 @@ def gui_rock(init_loc,fin_loc):
 
         Vf_s[i][k] = sqrt((Vx_s[i][k]**2 +Vy_s[i][k]**2 +(omega_s[i][k]*Lf)**2 +(2 *omega_s[i][k]*Lf*(Vy_s[i][k] *cos(theta_s[i][k]) -Vx_s[i][k] *sin(theta_s[i][k])))))
 
-     print(Vr_s[i][:], Vf_s[i][:], 'maxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxvelllllllllllllllllllllllll')
-
-
     waypoints=np.zeros((robotN,3,((N-1)*M)+1),dtype=float)
 
     print(np.shape(x_s))
@@ -639,40 +639,271 @@ def gui_rock(init_loc,fin_loc):
         plt.show()
 
 
-    print(np.shape(waypoints),np.shape(Vx_s),np.shape(Vy_s))
-
     Vx_s=np.array(Vx_s)
     Vy_s=np.array(Vy_s)
     omega_s=np.array(omega_s)
     #print(diff_t)
 
     plt.plot(ts,waypoints[0,0,:])
+
     plt.show()
-    return waypoints,Vx_s,Vy_s,omega_s,diff_t
+
+    return waypoints,Vx_s,Vy_s,omega_s,diff_t,deltaf_s,deltar_s
+
 
 if __name__ == '__main__':
 
-    init=[[0,0,pi/2],[0.25,0,pi/2],[0.5,0,pi/2]]
-    finit = [[3,3,0],[3,3.25,0],[3,3.5,0]]
+    p1 = [[0,0,pi/2],[0.35,0,pi/2],[0.7,0,pi/2]]
+    p2 = [[3,3.7,0],[3,3.35,0],[0.7,0,pi/2]]
+    p3 = [[3, 3.7, 0], [3, 3.35, 0], [0.7, 0, pi / 2]]
+    p4 = [[3,3.7,0],[3,3.35,0],[3,3,0]]
 
-    init=[[0,0,pi/2],[0.35,0,pi/2],[0.7,0,pi/2]]
-    finit = [[3,3.7,0],[3,3.35,0],[3,3,0]]
+    Nr = len(p1)
 
-    init=[[0,0,pi/2],[0.35,0,pi/2],[0.7,0,pi/2]]
-    finit = [[3,3.7,0],[3,3.35,0],[0.7,0,pi/2]]
-
-    init=[[0,0,pi/2],[0.35,0,pi/2],[3,3,pi/2]]
-    finit = [[0.3,1.15,0],[0.3,0.7,0],[3,3,pi/2]]
+    r0 = 0.5
 
 
-    if len(init)!=len(finit):
-        print('something is wrong... length of initial and final conditions dont match.Sorry,cannot continue')
-        exit()
+    [waypoints1, Vx_s1, Vy_s1, omega_s1, diff_t1, deltaf_s1, deltar_s1] = gui_rock(p1, p2)
 
 
-    #init=[[0,0,pi/2],[0.25,0,pi/2],[0.5,0,pi/2]]
-    #finit=[[3,3,0],[3,3.25,0],[0.5,0,pi/2]]
+    [waypoints2, Vx_s2, Vy_s2, omega_s2, diff_t2, deltaf_s2, deltar_s2] = gui_rock(p3, p4)
 
-    gui_rock()
+    ############################################################################################################
+
+    # Problem with concatenation:motion 1 has only 2 robots moving//
+
+    # 1) an extra dimension of zeros could be created(dynamic) 2) disable do control1 (not dynamic)
+    # 2) 1) get number of robots by len(waypoints)
+    #    2) attach a Nrt-Nr init_loc(or the location of stationary object)  vector to waypoint1
+    #    3) do the same for waypoint2
+    #    4) then concatenate
+
+    ############################################################################################################
+
+
+    robotN=len(p1)
+
+    Nr_d1=len(waypoints1)
+    Nr_s1=robotN-Nr_d1
+    st_loc1=[[0,1,2]]
+
+
+    Nr_d2=len(waypoints2)
+    Nr_s2 =robotN-Nr_d2
+    st_loc2=[[0, 1, 2],[3,4,5]]
+
+
+    v_1=np.full((0,3,len(waypoints1[0,0,:])), st_loc1[0])
+
+
+    v_21=np.full((0,3,len(waypoints2[0,0,:])), st_loc2[0])
+    v_22 =np.full((0,3,len(waypoints2[0, 0, :])), st_loc2[1])
+
+
+    waypoints1c=np.concatenate((waypoints1,v_1),axis=0)
+    waypoints2c=np.concatenate((waypoints2,v_21,v_22),axis=0)
+
+    waypoints = np.concatenate((waypoints1c, waypoints2c), axis=2)
+
+    Vx_s = np.concatenate((Vx_s1, Vx_s2), axis=1)
+    Vy_s = np.concatenate((Vy_s1, Vy_s2), axis=1)
+    omega_s = np.concatenate((omega_s1, omega_s2), axis=1)
+    diff_t = np.concatenate((diff_t1, diff_t2), axis=0)
+    deltaf_s = np.concatenate((deltaf_s1, deltaf_s2), axis=1)
+    deltar_s = np.concatenate((deltar_s1, deltar_s2), axis=1)
+
+
+    # Animation
+    x_d = waypoints[:, 0, :]
+    y_d = waypoints[:, 1, :]
+    theta = waypoints[:, 2, :]
+
+    deltaf = deltaf_s
+    deltar = deltar_s
+
+    #Animation
+
+    print(np.shape(theta))
+
+    #number of dynamic robots
+
+    Nr=robotN
+
+    # Number of static robots
+
+    Ns=len(ind_same)
+
+    #robot dimension
+    ht=0.25
+    wt=0.9
+
+    #wheel dimensions
+    ht_w=0.05
+    wt_w=0.1
+
+    hyp=sqrt((0.5*ht)**2+(0.5*wt)**2)
+    ang=arctan(ht/wt)
+
+    # First set up the figure, the axis, and the plot element we want to animate
+    fig = plt.figure()
+    #np.abs(Init_con[:][1]+Fin_con[:][1]+[7.5])
+    xl=np.abs(x_d).max()+1.5
+    yl=np.abs(y_d).max()+1.5
+    ax = plt.axes(xlim=(xl, -xl), ylim=(-yl, yl),aspect='equal')
+    ax.set_xlabel('x(m)')
+    ax.set_ylabel('y(m)')
+    ax.set_title("robot position")
+
+    line = [ax.plot([], [],lw=1,markersize=0.3)[0] for _ in range(Nr)] #lines to animate for robots
+    line_s = [ax.plot([], [], lw=1, markersize=0.3)[0] for _ in range(Ns)]  # lines to animate for static robots
+    linewf = [ax.plot([], [],lw=1,markersize=0.3)[0] for _ in range(Nr)] #lines to animate for front wheels
+    linewr = [ax.plot([], [],lw=1,markersize=0.3)[0] for _ in range(Nr)] #lines to animate for rear wheels
+    line_ex = [ax.plot([], [],lw=1,markersize=0.1)[0] for _ in range(Nr)] #lines to animate for path followed we only have to plot (x_d[ri,ki]) points
+    #line_circ=[ax.plot([], [],lw=1,markersize=0.1)[0] for _ in range(Nr)] #circle around vehicle
+    line_in=[ax.scatter([], [],s=50, c='blue', marker='o') for _ in range(Nr)]  #initial position
+    line_fin=[ax.scatter([], [],s=500, c='red', marker='+') for _ in range(Nr)] #final position
+
+    lines=line+linewf+linewr+line_ex
+
+    #initialization function: plot the background of each frame
+    def init():
+        for l in lines:
+            l.set_data([], [])
+
+        points = np.array(
+            [[-0.5 * wt, -0.5 * ht], [+0.5 * wt, -0.5 * ht], [+0.5 * wt, +0.5 * ht], [-0.5 * wt, +0.5 * ht]])
+
+        x_rs = np.array([[[0 for m in range(2)] for n in range(4)] for o in range(Ns)], dtype='float')
+        x_ts = np.array([[[0 for m in range(2)] for n in range(4)] for o in range(Ns)], dtype='float')
+
+        # static robots
+        for k, ln in enumerate(line_s):
+            # xx=[[0]*5]*Nr
+            # yy=[[0]*5]*Nr
+            for j in range(len(points)):
+                x_rs[k, j, 0] = points[j, 0] * np.cos(theta_d_s[k]) - points[j, 1] * np.sin(theta_d_s[k])
+                x_rs[k, j, 1] = points[j, 0] * np.sin(theta_d_s[k]) + points[j, 1] * np.cos(theta_d_s[k])
+                x_ts[k, j, :] = x_rs[k, j, 0] + x_d_s[k], x_rs[k, j, 1] + y_d_s[k]
+
+            xx = x_ts[k, :, 0]
+            xx = np.concatenate((xx, np.array([x_ts[k, 0, 0]])))
+            yy = x_ts[k, :, 1]
+            yy = np.concatenate((yy, np.array([x_ts[k, 0, 1]])))
+
+            ln.set_data(xx, yy)
+
+        for l in line_in:
+            l.set_offsets([])
+        for l in line_fin:
+            l.set_offsets([])
+        return lines,line_in,line_fin
+
+    #pdb.set_trace()
+
+    # animation function.  This is called sequentially
+    def animate(i):
+        #Dynamic objects
+
+        """perform animation step"""
+        # draw ith rectangle
+        points = np.array([[-0.5 * wt, -0.5 * ht], [+0.5 * wt, -0.5 * ht], [+0.5 * wt, +0.5 * ht], [-0.5 * wt, +0.5 * ht]])
+        pointsw = np.array([[-0.5 * wt_w, -0.5 * ht_w], [+0.5 * wt_w, -0.5 * ht_w], [+0.5 * wt_w, +0.5 * ht_w],
+                            [-0.5 * wt_w, +0.5 * ht_w]])
+
+        x_r = np.array([[[0 for m in range(2)] for n in range(4)] for o in range(Nr)],dtype='float')
+        x_t = np.array([[[0 for m in range(2)] for n in range(4)] for o in range(Nr)], dtype='float')
+        x_rw = np.array([[[0 for m in range(2)] for n in range(4)] for o in range(Nr)], dtype='float')
+        x_tw = np.array([[[0 for m in range(2)] for n in range(4)] for o in range(Nr)], dtype='float')
+
+        #robots
+
+        for k, ln in enumerate(line):
+            #xx=[[0]*5]*Nr
+            #yy=[[0]*5]*Nr
+            for j in range(len(points)):
+                x_r[k, j, 0] = points[j, 0] * np.cos(theta[k, i]) - points[j, 1] * np.sin(theta[k, i])
+                x_r[k, j, 1] = points[j, 0] * np.sin(theta[k, i]) + points[j, 1] * np.cos(theta[k, i])
+                x_t[k, j, :] = x_r[k, j, 0] + x_d[k, i], x_r[k, j, 1] + y_d[k, i]
+
+            xx=x_t[k,:,0]
+            xx=np.concatenate((xx, np.array([x_t[k,0,0]])))
+            yy = x_t[k,:,1]
+            yy = np.concatenate((yy, np.array([x_t[k, 0, 1]])))
+
+            ln.set_data(xx,yy)
+
+            #wheels
+
+        for k, ln in enumerate(linewf):
+            #xxw = [[0] * 5] * Nr
+            #yyw = [[0] * 5] * Nr
+            for j in range(len(pointsw)):
+                x_rw[k, j, 0] = pointsw[j, 0] * np.cos(theta[k, i] + deltaf[k, i]) - pointsw[j, 1] * np.sin(
+                    theta[k, i] + deltaf[k, i])
+                x_rw[k, j, 1] = pointsw[j, 0] * np.sin(theta[k, i] + deltaf[k, i]) + pointsw[j, 1] * np.cos(
+                    theta[k, i] + deltaf[k, i])
+
+                # translation
+                tx = wt/2 * cos(theta[k][i])
+                ty = wt/2* sin(theta[k][i])
+                x_tw[k, j, :] = x_rw[k, j, 0] + x_d[k, i] + tx, x_rw[k, j, 1] + y_d[k, i] + ty
+
+            xxw = x_tw[k, :, 0]
+            xxw = np.concatenate((xxw, np.array([x_tw[k, 0, 0]])))
+            yyw = x_tw[k, :, 1]
+            yyw = np.concatenate((yyw, np.array([x_tw[k, 0, 1]])))
+
+            ln.set_data(xxw, yyw)
+
+        for k, ln in enumerate(linewr):
+                #xxw = [[0] * 5] * Nr
+                #yyw = [[0] * 5] * Nr
+                for j in range(len(pointsw)):
+                    x_rw[k, j, 0] = pointsw[j, 0] * np.cos(theta[k, i] + deltar[k, i]) - pointsw[j, 1] * np.sin(
+                        theta[k, i] + deltar[k, i])
+                    x_rw[k, j, 1] = pointsw[j, 0] * np.sin(theta[k, i] + deltar[k, i]) + pointsw[j, 1] * np.cos(
+                        theta[k, i] + deltar[k, i])
+
+                    # translation
+                    tx = wt / 2 * cos(theta[k][i])
+                    ty = wt / 2 * sin(theta[k][i])
+                    x_tw[k, j, :] = x_rw[k, j, 0] + x_d[k, i] - tx, x_rw[k, j, 1] + y_d[k, i] - ty
+
+                xxw = x_tw[k, :, 0]
+                xxw = np.concatenate((xxw, np.array([x_tw[k, 0, 0]])))
+                yyw = x_tw[k, :, 1]
+                yyw = np.concatenate((yyw, np.array([x_tw[k, 0, 1]])))
+
+                ln.set_data(xxw, yyw)
+
+        for k, ln in enumerate(line_ex):
+           ln.set_data(x_d[k,:i],y_d[k,:i])
+
+
+        for k, ln in enumerate(line_in):
+            ln.set_offsets([x_d[k, 0],y_d[k, 0]])
+
+        for k, ln in enumerate(line_fin):
+            ln.set_offsets([x_d[k, -1], y_d[k, -1]])
+
+        return lines,line_in,line_fin
+
+    anim = animation.FuncAnimation(fig, animate, init_func=init,
+                               frames=len(waypoints), interval=1, blit=False)
+
+    plt.show()
+
+
+Vx_s=np.array(Vx_s)
+Vy_s=np.array(Vy_s)
+omega_s=np.array(omega_s)
+#print(diff_t)
+
+plt.plot(ts,waypoints[0,0,:])
+plt.show()
+
+
+
+
 
 
