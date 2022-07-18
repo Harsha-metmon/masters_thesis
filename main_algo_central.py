@@ -15,6 +15,7 @@ from main_algo_1 import iter_sect
 from main_algo_3_ocp import gui_rock
 from main_algo_2_col_check import col_check_prelim,col_check_hyper
 from main_algo_4_socp import gui_rock_sub
+from main_algo_animation import anim_ate
 from numpy import sqrt
 import numpy as np
 
@@ -76,14 +77,21 @@ M=1
 ### call ocp and store all waypoint pairs for collission check
 
 waypoints=[]
+deltf_tot=[]
+deltr_tot=[]
 
 for i in range(len(points)):
     p1=points[i][0]
     p2=points[i][1]
-    wps=gui_rock(p1,p2,a,N,M)
+    wps,df,dr=gui_rock(p1,p2,a,N,M)
     wps=wps.tolist()
+
     waypoints.append(wps)
-#print(np.shape(waypoints),'realllllllllllllwp')
+    deltf_tot.append(df)
+    deltr_tot.append(dr)
+print(np.shape(deltr_tot),'realllllllllllllwp')
+
+anim_ate(waypoints,deltf_tot,deltr_tot,'before collision')
 
 #########################################################################
 #### Develop a time based collision system
@@ -139,20 +147,30 @@ Finit_sub=[i[1] for i in points_sub]
 
 #### wp_sub is a list (N,3) sized waypints
 
-wp_sub=gui_rock_sub(Init_sub,Finit_sub,a,N,M)
+wp_sub,deltf_sub,deltr_sub=gui_rock_sub(Init_sub,Finit_sub,a,N,M)
+
+print(np.shape(deltf_sub),'wpsubbbbbbbbbbbbbbbbbbb')
+
+#print(np.shape(wp_sub))
+
+anim_ate(wp_sub,deltf_sub,deltr_sub,'sub problem after collision avoidance')
 
 ##### replace wp_sub according to their indices in waypoints.
 
 for (ind, rep) in zip(col_rob, wp_sub):
     waypoints[ind] = rep
+for (ind, rep) in zip(col_rob, deltf_sub):
+    deltf_tot[ind] = rep
+for (ind, rep) in zip(col_rob, deltr_sub):
+    deltr_tot[ind] = rep
 
 ############# run collision check again/or connect the loop/build animation
+
+anim_ate(waypoints,deltf_tot,deltr_tot,'overall motion after collision avoidance')
 
 
 ############### Animations required// all the motion,before colision avoidance/all the motion after colision avoidance./prepare a function that accepts waypoints,deltaf,deltar as inputs
 # and outputs the animation when called. Before that, prepare the appropriate vector
-
-
 
 
 

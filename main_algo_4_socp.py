@@ -494,4 +494,4 @@ def gui_rock_sub(init_loc,fin_loc,a,N,M):
     #print(diff_t)
 
 
-    return waypoints
+    return waypoints,deltaf_s,deltar_s
