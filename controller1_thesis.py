@@ -7,6 +7,7 @@ import scipy as sp
 import scipy.linalg as linalg
 import math
 import pdb
+import time
 
 # simulation
 
@@ -44,6 +45,8 @@ def controller(ref, x, y, theta):
     #Vf = (vx - (omega * Lf * sin(theta))) / (cos(deltaf + theta))
     Vf = sqrt(vx ** 2 + vy ** 2 + (omega * Lf) ** 2 + (2 * omega * Lf*(vy * cos(theta) - vx * sin(theta))))
 
+    print(Vr,Vf,'before')
+
 
     if saturation:
    
@@ -58,6 +61,7 @@ def controller(ref, x, y, theta):
 
 
 def update(x, y, theta, Vf, Vr, deltaf, deltar,dt):
+
     lr = 0.45
     lf = 0.45
     p_noise=0.01
@@ -66,16 +70,25 @@ def update(x, y, theta, Vf, Vr, deltaf, deltar,dt):
     #m_n = m_noise * np.random.rand(3,1)
 
     mu=0
-    sigma=0.02
-    sigma_t=0.01
 
-    p_n_x=p_noise *np.random.normal(mu, sigma, 1)
+    ########process sd
+
+    sigma_p=0.01
+    sigma_t_p=0.02
+
+
+    #####measurement mean nd sd
+    sigma = 0.01
+    sigma_t=0.02
+
+
+    p_n_x=p_noise *np.random.normal(mu, sigma_p, 1)
     m_n_x = m_noise * np.random.normal(mu, sigma, 1)
 
-    p_n_y=p_noise *np.random.normal(mu, sigma, 1)
+    p_n_y=p_noise *np.random.normal(mu, sigma_p, 1)
     m_n_y = m_noise * np.random.normal(mu, sigma, 1)
 
-    p_n_theta=p_noise *np.random.normal(mu, sigma_t, 1)
+    p_n_theta=p_noise *np.random.normal(mu, sigma_t_p, 1)
     m_n_theta = m_noise * np.random.normal(mu, sigma_t, 1)
 
 
@@ -101,15 +114,15 @@ def update(x, y, theta, Vf, Vr, deltaf, deltar,dt):
 
 for m in range (3):
 
-    k11=[0.01,0.05,0.1]
-    k22=[0.01,0.05,0.1]
-    k33=[0.01,0.05,0.1]
+    k11=[0.005,0.01,0.05]
+    k22=[0.005,0.01,0.05]
+    k33=[0.005,0.01,0.05]
 
     k1 = k11[m]
     k2 = k22[m]
     k3 = k33[m]
 
-    Ts = 0.75
+    Ts = 0.5
     N = 200
 
     animation=0
@@ -165,6 +178,7 @@ for m in range (3):
         #print(x,y,theta)
 
         t=t+Ts
+        #time.sleep(0.5)
 
         #plt.gcf().canvas.mpl_connect('key_release_event',
         #                             lambda event: [exit(0) if event.key == 'escape' else None])
@@ -178,15 +192,15 @@ for m in range (3):
 
     #plt.close()
 
-    plt.plot(time_log, x_log)
+    plt.plot(time_log, theta_log)
 
 plt.axhline(y=0.009, color='r', linestyle='-')
 
 plt.legend(["Gain={}".format(k11[0]),"Gain={}".format(k11[1]),"Gain={}".format(k11[2])])
 
-plt.title('X-position error evolution')
+plt.title('orientation error evolution')
 plt.xlabel('time[s]')
-plt.ylabel('position[m]')
+plt.ylabel('angle[rad]')
 
 plt.show()
 
